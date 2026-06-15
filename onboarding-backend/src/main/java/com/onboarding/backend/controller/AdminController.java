@@ -20,7 +20,6 @@ public class AdminController {
     @Autowired private StepRepository              stepRepository;
     @Autowired private UserWorkflowRepository      userWorkflowRepository;
     @Autowired private UserStepProgressRepository  userStepProgressRepository;
-    @Autowired private ActivityLogRepository       activityLogRepository;
     @Autowired private ActivityLogService          activityLogService;
 
     // ── USERS ────────────────────────────────────────────────
@@ -180,13 +179,5 @@ public class AdminController {
         stepRepository.deleteById(id);
 
         return ResponseEntity.ok(Map.of("message", "Step deleted."));
-    }
-
-    // ── ACTIVITY LOG (MongoDB) ───────────────────────────────
-
-    // Full audit trail, newest first — read straight from MongoDB.
-    @GetMapping("/activity")
-    public ResponseEntity<?> getActivityLog() {
-        return ResponseEntity.ok(activityLogRepository.findAllByOrderByTimestampDesc());
     }
 }

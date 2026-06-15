@@ -1,15 +1,11 @@
 package com.onboarding.backend.controller;
 
-import com.onboarding.backend.document.Reminder;
 import com.onboarding.backend.model.*;
 import com.onboarding.backend.repository.*;
-import com.onboarding.backend.service.ActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.*;
 
 @RestController
@@ -21,8 +17,6 @@ public class ManagerController {
     @Autowired private WorkflowRepository          workflowRepository;
     @Autowired private StepRepository              stepRepository;
     @Autowired private UserStepProgressRepository  userStepProgressRepository;
-    @Autowired private ReminderRepository          reminderRepository;
-    @Autowired private ActivityLogService          activityLogService;
 
     @GetMapping("/users")
     public ResponseEntity<?> getAllUsersProgress() {
@@ -68,36 +62,6 @@ public class ManagerController {
         }
 
         return ResponseEntity.ok(result);
-    }
-
-    @PostMapping("/reminders")
-    public ResponseEntity<?> sendReminder(@RequestBody Map<String, Object> body) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User manager = userRepository.findByEmail(email).orElse(null);
-
-        if (manager == null)
-            return ResponseEntity.status(404).body(Map.of("message", "Manager not found."));
-
-        Long userId    = Long.valueOf(body.get("user_id").toString());
-        String message = (String) body.get("message");
-
-        Reminder reminder = new Reminder();
-        reminder.setManagerId(manager.getId());
-        reminder.setUserId(userId);
-        reminder.setMessage(message);
-        reminder.setSentAt(LocalDateTime.now());   // Mongo has no @PrePersist, set it here
-        reminderRepository.save(reminder);          // → MongoDB
-
-        activityLogService.log("REMINDER_SENT", manager.getEmail(),
-                "Reminder sent to user " + userId);
-
-        return ResponseEntity.ok(Map.of("message", "Reminder sent."));
-    }
-
-    // Read reminders for one employee (data lives in MongoDB)
-    @GetMapping("/reminders/{userId}")
-    public ResponseEntity<?> getReminders(@PathVariable Long userId) {
-        return ResponseEntity.ok(reminderRepository.findByUserId(userId));
     }
 
     // Detailed step-by-step breakdown for one employee, so the manager can see

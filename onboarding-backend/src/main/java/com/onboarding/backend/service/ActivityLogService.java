@@ -1,19 +1,42 @@
 package com.onboarding.backend.service;
 
-import com.onboarding.backend.document.ActivityLog;
-import com.onboarding.backend.repository.ActivityLogRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 
-// Thin helper so controllers can record an audit event in one line.
-// Every call writes a new document into the MongoDB activity_log collection.
+import java.util.Map;
+
+// Audit logging now lives in the Node.js service (which owns MongoDB). Instead
+// of writing to Mongo directly, Spring Boot posts each event to Node over HTTP.
+// Best-effort: a logging failure must never break the main business operation.
 @Service
 public class ActivityLogService {
 
-    @Autowired
-    private ActivityLogRepository activityLogRepository;
+    private final RestClient restClient = RestClient.create();
+
+    @Value("${node.service.url:http://localhost:8082}")
+    private String nodeUrl;
+
+    // Shared key so Node accepts this server-to-server call (no user JWT here,
+    // e.g. the LOGIN event is recorded before a token exists).
+    private static final String INTERNAL_KEY = "onboarding-internal-key";
 
     public void log(String action, String actorEmail, String detail) {
-        activityLogRepository.save(new ActivityLog(action, actorEmail, detail));
+        try {
+            restClient.post()
+                    .uri(nodeUrl + "/activity")
+                    .header("X-Internal-Key", INTERNAL_KEY)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of(
+                            "action", action,
+                            "actorEmail", actorEmail == null ? "" : actorEmail,
+                            "detail", detail == null ? "" : detail))
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (Exception e) {
+            // Node may be down — never let audit logging break the request.
+            System.err.println("[activity-log] could not reach Node service: " + e.getMessage());
+        }
     }
 }

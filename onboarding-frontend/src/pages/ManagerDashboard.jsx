@@ -39,7 +39,7 @@ export default function ManagerDashboard() {
     if (!reminderMsg.trim()) return
     setSendingTo(userId)
     try {
-      await api.post('/manager/reminders', { user_id: userId, message: reminderMsg })
+      await api.post('/reminders', { user_id: userId, message: reminderMsg })
       setFeedback({ ...feedback, [userId]: 'success' })
       setOpenReminder(null)
       setReminderMsg('')

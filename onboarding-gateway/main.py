@@ -12,7 +12,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-SPRING_BOOT_URL = "http://localhost:8081"
+SPRING_BOOT_URL = "http://localhost:8081"   # PostgreSQL-backed (users, workflows, steps, progress)
+NODE_URL        = "http://localhost:8082"   # MongoDB-backed (reminders, activity log)
+
+# Paths whose first segment matches these go to the Node service; everything else
+# goes to Spring Boot.
+NODE_PREFIXES = ("reminders", "activity")
+
+
+def pick_backend(path: str) -> str:
+    first = path.split("/", 1)[0]
+    return NODE_URL if first in NODE_PREFIXES else SPRING_BOOT_URL
 
 @app.get("/")
 async def root():
@@ -24,7 +34,7 @@ async def proxy(path: str, request: Request):
     if request.method == "OPTIONS":
         return Response(status_code=200)
 
-    target_url = f"{SPRING_BOOT_URL}/{path}"
+    target_url = f"{pick_backend(path)}/{path}"
     body = await request.body()
     headers = {k: v for k, v in request.headers.items() if k.lower() != "host"}
 
