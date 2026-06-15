@@ -1,0 +1,30 @@
+# ── Node / frontend ─────────────────────────────
+node_modules/
+dist/
+.vite/
+*.local
+
+# ── Java / backend ──────────────────────────────
+target/
+*.class
+
+# ── Python / gateway ────────────────────────────
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# ── Env / secrets ───────────────────────────────
+.env
+.env.*
+
+# ── Editor / OS ─────────────────────────────────
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# ── Logs ────────────────────────────────────────
+*.log
+npm-debug.log*
