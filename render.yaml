@@ -1,0 +1,39 @@
+# Render Blueprint — deploys the Spring Boot backend + a managed PostgreSQL.
+# In Render: New → Blueprint → connect this repo. Render reads this file,
+# creates the database, builds the Docker image, and wires the env vars.
+#
+# Note: this deploys ONLY the Spring Boot service + PostgreSQL. The MongoDB-backed
+# features (reminders, activity log) live in the Node service and are not deployed
+# here, so Spring Boot's audit-log calls simply no-op (best-effort, won't error).
+
+databases:
+  - name: onboarding-postgres
+    plan: free
+    databaseName: onboarding_db
+
+services:
+  - type: web
+    name: onboarding-backend
+    runtime: docker
+    rootDir: onboarding-backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /swagger-ui/index.html
+    envVars:
+      - key: DB_HOST
+        fromDatabase: { name: onboarding-postgres, property: host }
+      - key: DB_PORT
+        fromDatabase: { name: onboarding-postgres, property: port }
+      - key: DB_NAME
+        fromDatabase: { name: onboarding-postgres, property: database }
+      - key: DB_USER
+        fromDatabase: { name: onboarding-postgres, property: user }
+      - key: DB_PASS
+        fromDatabase: { name: onboarding-postgres, property: password }
+      # Render's internal DB connection doesn't need SSL; if you use the external
+      # host instead, set DB_PARAMS to "?sslmode=require".
+      - key: DB_PARAMS
+        value: ""
+      # Fresh DB → let Hibernate create the tables; DataSeeder adds the accounts.
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: update
