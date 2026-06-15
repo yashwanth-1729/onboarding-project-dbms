@@ -295,7 +295,7 @@ function WorkflowsTab() {
                   onClick={() => handleSelectWorkflow(wf)}
                   style={{
                     padding: '12px',
-                    border: `1px solid ${selected?.id === wf.id ? 'rgba(79,255,176,0.3)' : 'var(--border)'}`,
+                    border: `1px solid ${selected?.id === wf.id ? 'rgba(12,166,120,0.3)' : 'var(--border)'}`,
                     borderRadius: 'var(--radius)',
                     marginBottom: '8px',
                     cursor: 'pointer',

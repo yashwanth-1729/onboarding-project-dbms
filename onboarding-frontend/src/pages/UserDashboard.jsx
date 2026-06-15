@@ -164,7 +164,7 @@ export default function UserDashboard() {
             </div>
 
             {pct === 100 && (
-              <div className="card" style={{ borderColor: 'rgba(79,255,176,0.3)', background: 'var(--success-bg)', textAlign: 'center' }}>
+              <div className="card" style={{ borderColor: 'rgba(12,166,120,0.3)', background: 'var(--success-bg)', textAlign: 'center' }}>
                 <p style={{ fontSize: '28px', marginBottom: '8px' }}>🎉</p>
                 <p style={{ color: 'var(--accent)', fontWeight: 600 }}>Onboarding Complete!</p>
                 <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>

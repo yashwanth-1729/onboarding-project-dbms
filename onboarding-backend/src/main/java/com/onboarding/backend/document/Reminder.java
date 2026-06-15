@@ -1,34 +1,25 @@
-package com.onboarding.backend.model;
+package com.onboarding.backend.document;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "reminders")
+// Stored in MongoDB (not PostgreSQL). A reminder is a self-contained
+// document — no joins needed — so it's a natural fit for a NoSQL collection.
+@Document(collection = "reminders")
 public class Reminder {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @Column(name = "manager_id")
     private Long managerId;
-
-    @Column(name = "user_id")
     private Long userId;
-
     private String message;
-
-    @Column(name = "sent_at")
     private LocalDateTime sentAt;
 
-    @PrePersist
-    public void prePersist() {
-        this.sentAt = LocalDateTime.now();
-    }
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
     public Long getManagerId() { return managerId; }
     public void setManagerId(Long managerId) { this.managerId = managerId; }

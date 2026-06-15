@@ -2,8 +2,10 @@ package com.onboarding.backend.controller;
 
 import com.onboarding.backend.model.*;
 import com.onboarding.backend.repository.*;
+import com.onboarding.backend.service.ActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -17,6 +19,8 @@ public class AdminController {
     @Autowired private StepRepository              stepRepository;
     @Autowired private UserWorkflowRepository      userWorkflowRepository;
     @Autowired private UserStepProgressRepository  userStepProgressRepository;
+    @Autowired private ActivityLogRepository       activityLogRepository;
+    @Autowired private ActivityLogService          activityLogService;
 
     // ── USERS ────────────────────────────────────────────────
 
@@ -113,6 +117,18 @@ public class AdminController {
             userStepProgressRepository.save(progress);
         }
 
+        String adminEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        activityLogService.log("WORKFLOW_ASSIGNED", adminEmail,
+                "Workflow " + workflowId + " assigned to user " + userId);
+
         return ResponseEntity.ok(Map.of("message", "Workflow assigned successfully."));
+    }
+
+    // ── ACTIVITY LOG (MongoDB) ───────────────────────────────
+
+    // Full audit trail, newest first — read straight from MongoDB.
+    @GetMapping("/activity")
+    public ResponseEntity<?> getActivityLog() {
+        return ResponseEntity.ok(activityLogRepository.findAllByOrderByTimestampDesc());
     }
 }

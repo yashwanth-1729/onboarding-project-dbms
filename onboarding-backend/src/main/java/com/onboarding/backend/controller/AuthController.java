@@ -3,6 +3,7 @@ package com.onboarding.backend.controller;
 import com.onboarding.backend.config.JwtUtil;
 import com.onboarding.backend.model.User;
 import com.onboarding.backend.repository.UserRepository;
+import com.onboarding.backend.service.ActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,9 @@ public class AuthController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private ActivityLogService activityLogService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
@@ -39,6 +43,9 @@ public class AuthController {
         }
 
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
+
+        activityLogService.log("LOGIN", user.getEmail(),
+                user.getName() + " (" + user.getRole() + ") logged in");
 
         Map<String, Object> userInfo = new HashMap<>();
         userInfo.put("id",    user.getId());
