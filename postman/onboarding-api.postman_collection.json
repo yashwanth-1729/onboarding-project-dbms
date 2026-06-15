@@ -1,0 +1,249 @@
+{
+  "info": {
+    "_postman_id": "b1a7c0de-0001-4a00-9000-onboarding0001",
+    "name": "Onboarding API (DBMS Project)",
+    "description": "Spring Boot REST API for the Employee Onboarding System.\n\nHOW TO USE:\n1. Run a request under 'Auth' (Login as Admin / Manager / User). Its script saves the JWT into the collection variable `token` automatically.\n2. All other requests inherit `Bearer {{token}}`, so they just work.\n3. Match the role to the route: an ADMIN token works on /admin/**, MANAGER on /manager/**, USER on /user/**.\n\nBase URL is the collection variable `baseUrl` (default http://localhost:8081 = Spring Boot directly). Change it to http://localhost:8000 to go through the FastAPI gateway.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8081", "type": "string" },
+    { "key": "token", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login as Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "  console.log('Saved token for', json.user && json.user.role);",
+                  "}",
+                  "pm.test('login ok', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@company.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Login as User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.token) { pm.collectionVariables.set('token', json.token); }",
+                  "pm.test('login ok', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"yashwanth@company.com\",\n  \"password\": \"yashwanth123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/admin/users", "host": ["{{baseUrl}}"], "path": ["admin", "users"] }
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bob Manager\",\n  \"email\": \"bob@company.com\",\n  \"password\": \"bob123\",\n  \"role\": \"MANAGER\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/admin/users", "host": ["{{baseUrl}}"], "path": ["admin", "users"] }
+          }
+        },
+        {
+          "name": "Get All Workflows",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/admin/workflows", "host": ["{{baseUrl}}"], "path": ["admin", "workflows"] }
+          }
+        },
+        {
+          "name": "Create Workflow",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Engineer Onboarding\",\n  \"job_type\": \"ENGINEER\",\n  \"description\": \"Standard onboarding for engineers\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/admin/workflows", "host": ["{{baseUrl}}"], "path": ["admin", "workflows"] }
+          }
+        },
+        {
+          "name": "Get Workflow Steps",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/admin/workflows/1/steps", "host": ["{{baseUrl}}"], "path": ["admin", "workflows", "1", "steps"] }
+          }
+        },
+        {
+          "name": "Add Step to Workflow",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Sign NDA\",\n  \"description\": \"Read and sign the NDA document\",\n  \"step_order\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/admin/workflows/1/steps", "host": ["{{baseUrl}}"], "path": ["admin", "workflows", "1", "steps"] }
+          }
+        },
+        {
+          "name": "Assign Workflow to User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 2,\n  \"workflow_id\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/admin/assign", "host": ["{{baseUrl}}"], "path": ["admin", "assign"] }
+          }
+        },
+        {
+          "name": "Get Activity Log (MongoDB)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/admin/activity", "host": ["{{baseUrl}}"], "path": ["admin", "activity"] }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/admin/users/2", "host": ["{{baseUrl}}"], "path": ["admin", "users", "2"] }
+          }
+        },
+        {
+          "name": "Delete Workflow",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/admin/workflows/1", "host": ["{{baseUrl}}"], "path": ["admin", "workflows", "1"] }
+          }
+        },
+        {
+          "name": "Delete Step",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/admin/steps/1", "host": ["{{baseUrl}}"], "path": ["admin", "steps", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Manager",
+      "item": [
+        {
+          "name": "Get All Users Progress",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/manager/users", "host": ["{{baseUrl}}"], "path": ["manager", "users"] }
+          }
+        },
+        {
+          "name": "Get User Step Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/manager/users/2/steps", "host": ["{{baseUrl}}"], "path": ["manager", "users", "2", "steps"] }
+          }
+        },
+        {
+          "name": "Send Reminder",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 2,\n  \"message\": \"Please complete your pending onboarding tasks.\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/manager/reminders", "host": ["{{baseUrl}}"], "path": ["manager", "reminders"] }
+          }
+        },
+        {
+          "name": "Get Reminders for User (MongoDB)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/manager/reminders/2", "host": ["{{baseUrl}}"], "path": ["manager", "reminders", "2"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Get My Workflow",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/user/my-workflow", "host": ["{{baseUrl}}"], "path": ["user", "my-workflow"] }
+          }
+        },
+        {
+          "name": "Complete a Step",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/user/steps/4/complete", "host": ["{{baseUrl}}"], "path": ["user", "steps", "4", "complete"] }
+          }
+        }
+      ]
+    }
+  ]
+}

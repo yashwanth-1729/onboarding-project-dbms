@@ -13,6 +13,9 @@ export default function ManagerDashboard() {
   const [reminderMsg, setReminderMsg] = useState('')
   const [sendingTo, setSendingTo] = useState(null)
   const [feedback, setFeedback] = useState({}) // { userId: 'success' | 'error' }
+  const [openDetail, setOpenDetail] = useState(null) // user id whose steps are expanded
+  const [stepDetails, setStepDetails] = useState({}) // { userId: [steps] }
+  const [loadingDetail, setLoadingDetail] = useState(null)
 
   const fetchUsers = async () => {
     try {
@@ -44,6 +47,26 @@ export default function ManagerDashboard() {
       setFeedback({ ...feedback, [userId]: 'error' })
     } finally {
       setSendingTo(null)
+    }
+  }
+
+  // Expand/collapse a user's detailed step list (fetched on first open)
+  const toggleDetail = async (userId) => {
+    if (openDetail === userId) {
+      setOpenDetail(null)
+      return
+    }
+    setOpenDetail(userId)
+    if (!stepDetails[userId]) {
+      setLoadingDetail(userId)
+      try {
+        const res = await api.get(`/manager/users/${userId}/steps`)
+        setStepDetails((prev) => ({ ...prev, [userId]: res.data }))
+      } catch {
+        setStepDetails((prev) => ({ ...prev, [userId]: [] }))
+      } finally {
+        setLoadingDetail(null)
+      }
     }
   }
 

@@ -6,6 +6,7 @@ import com.onboarding.backend.service.ActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -122,6 +123,63 @@ public class AdminController {
                 "Workflow " + workflowId + " assigned to user " + userId);
 
         return ResponseEntity.ok(Map.of("message", "Workflow assigned successfully."));
+    }
+
+    // ── DELETE ───────────────────────────────────────────────
+
+    // Delete a user and everything tied to them (assignment + step progress).
+    @DeleteMapping("/users/{id}")
+    @Transactional
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        Optional<User> user = userRepository.findById(id);
+        if (user.isEmpty())
+            return ResponseEntity.status(404).body(Map.of("message", "User not found."));
+
+        userWorkflowRepository.findByUserId(id).ifPresent(userWorkflowRepository::delete);
+        userStepProgressRepository.deleteAll(userStepProgressRepository.findByUserId(id));
+        userRepository.deleteById(id);
+
+        String adminEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        activityLogService.log("USER_DELETED", adminEmail,
+                "Deleted user " + user.get().getName() + " (id " + id + ")");
+
+        return ResponseEntity.ok(Map.of("message", "User deleted."));
+    }
+
+    // Delete a workflow and its steps, plus any assignments/progress that used it.
+    @DeleteMapping("/workflows/{id}")
+    @Transactional
+    public ResponseEntity<?> deleteWorkflow(@PathVariable Long id) {
+        Optional<Workflow> workflow = workflowRepository.findById(id);
+        if (workflow.isEmpty())
+            return ResponseEntity.status(404).body(Map.of("message", "Workflow not found."));
+
+        List<Step> steps = stepRepository.findByWorkflowId(id);
+        for (Step step : steps) {
+            userStepProgressRepository.deleteAll(userStepProgressRepository.findByStepId(step.getId()));
+        }
+        stepRepository.deleteAll(steps);
+        userWorkflowRepository.deleteAll(userWorkflowRepository.findByWorkflowId(id));
+        workflowRepository.deleteById(id);
+
+        String adminEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        activityLogService.log("WORKFLOW_DELETED", adminEmail,
+                "Deleted workflow " + workflow.get().getTitle() + " (id " + id + ")");
+
+        return ResponseEntity.ok(Map.of("message", "Workflow deleted."));
+    }
+
+    // Delete a single step and any user progress recorded against it.
+    @DeleteMapping("/steps/{id}")
+    @Transactional
+    public ResponseEntity<?> deleteStep(@PathVariable Long id) {
+        if (stepRepository.findById(id).isEmpty())
+            return ResponseEntity.status(404).body(Map.of("message", "Step not found."));
+
+        userStepProgressRepository.deleteAll(userStepProgressRepository.findByStepId(id));
+        stepRepository.deleteById(id);
+
+        return ResponseEntity.ok(Map.of("message", "Step deleted."));
     }
 
     // ── ACTIVITY LOG (MongoDB) ───────────────────────────────

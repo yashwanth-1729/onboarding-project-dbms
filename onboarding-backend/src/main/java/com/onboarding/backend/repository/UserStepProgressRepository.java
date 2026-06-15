@@ -7,5 +7,6 @@ import java.util.Optional;
 
 public interface UserStepProgressRepository extends JpaRepository<UserStepProgress, Long> {
     List<UserStepProgress> findByUserId(Long userId);
+    List<UserStepProgress> findByStepId(Long stepId);
     Optional<UserStepProgress> findByUserIdAndStepId(Long userId, Long stepId);
 }

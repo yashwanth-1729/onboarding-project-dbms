@@ -99,4 +99,39 @@ public class ManagerController {
     public ResponseEntity<?> getReminders(@PathVariable Long userId) {
         return ResponseEntity.ok(reminderRepository.findByUserId(userId));
     }
+
+    // Detailed step-by-step breakdown for one employee, so the manager can see
+    // exactly which steps are DONE vs PENDING (not just an overall percentage).
+    @GetMapping("/users/{userId}/steps")
+    public ResponseEntity<?> getUserSteps(@PathVariable Long userId) {
+        Optional<UserWorkflow> uw = userWorkflowRepository.findByUserId(userId);
+        if (uw.isEmpty())
+            return ResponseEntity.ok(new ArrayList<>());   // no workflow assigned yet
+
+        List<Step> steps = stepRepository.findByWorkflowId(uw.get().getWorkflowId());
+
+        // Map step_id → progress status for quick lookup
+        Map<Long, UserStepProgress> progressByStep = new HashMap<>();
+        for (UserStepProgress p : userStepProgressRepository.findByUserId(userId)) {
+            progressByStep.put(p.getStepId(), p);
+        }
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Step step : steps.stream()
+                .sorted(Comparator.comparing(Step::getStepOrder,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList()) {
+            UserStepProgress p = progressByStep.get(step.getId());
+            Map<String, Object> m = new HashMap<>();
+            m.put("step_id",      step.getId());
+            m.put("title",        step.getTitle());
+            m.put("description",  step.getDescription());
+            m.put("step_order",   step.getStepOrder());
+            m.put("status",       p != null ? p.getStatus() : "PENDING");
+            m.put("completed_at", p != null ? p.getCompletedAt() : null);
+            result.add(m);
+        }
+
+        return ResponseEntity.ok(result);
+    }
 }
